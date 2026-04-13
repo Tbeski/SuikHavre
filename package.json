@@ -10,9 +10,9 @@
   },
   "devDependencies": {
     "typescript": "^5.0.2",
-    "vite": "^8.0.8"
+    "vite": "^4.4.0"
   },
   "dependencies": {
-    "phaser": "^4.0.0"
+    "phaser": "^3.70.0"
   }
 }

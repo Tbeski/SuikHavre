@@ -21,20 +21,20 @@ const THEME_DATA: Record<Theme, Themeconfig> = {
 };
 
 const fruits: Fruit[] = [
-  { name: "fruit1", radius: 30 },
-  { name: "fruit2", radius: 35 },
-  { name: "fruit3", radius: 40 },
-  { name: "fruit4", radius: 50 },
-  { name: "fruit5", radius: 65 },
-  { name: "fruit6", radius: 70 },
-  { name: "fruit7", radius: 80 },
-  { name: "fruit8", radius: 90 },
+  { name: "fruit1", radius: 45 },
+  { name: "fruit2", radius: 55 },
+  { name: "fruit3", radius: 70 },
+  { name: "fruit4", radius: 85 },
+  { name: "fruit5", radius: 100 },
+  { name: "fruit6", radius: 120 },
+  { name: "fruit7", radius: 140 },
+  { name: "fruit8", radius: 170 },
 ];
 
-const PLAY_WIDTH = 550;
+const PLAY_WIDTH = 700;
 const PANEL_WIDTH = 400;
 const TOTAL_WIDTH = PLAY_WIDTH + PANEL_WIDTH;
-const GAME_HEIGHT = 1000;
+const GAME_HEIGHT = 1100;
 const WALL_MARGIN = 65;
 
 class Main extends Phaser.Scene {
@@ -157,7 +157,7 @@ class Main extends Phaser.Scene {
 
   updateNextFruitPanel(fruit: Fruit) {
     this.nextFruit = fruit;
-    const size = Math.min(fruit.radius * 2, 140);
+    const size = Math.min(fruit.radius * 2, 180);
     this.nextFruitImage
       .setTexture(fruit.name)
       .setDisplaySize(size, size);
@@ -255,18 +255,43 @@ class Main extends Phaser.Scene {
     );
     this.group = this.add.group();
 
+    const wallStyle = { color: 0x444466, alpha: 1 };
+
+    this.add.rectangle(
+        WALL_MARGIN / 2, 
+        GAME_HEIGHT / 2, 
+        WALL_MARGIN, 
+        GAME_HEIGHT, 
+        wallStyle.color, 
+        wallStyle.alpha).setDepth(1);
+
+    this.add.rectangle(
+        PLAY_WIDTH - (WALL_MARGIN / 2), 
+        GAME_HEIGHT / 2, 
+        WALL_MARGIN, 
+        GAME_HEIGHT, 
+        wallStyle.color, 
+        wallStyle.alpha).setDepth(1);
+
+    this.add.rectangle(
+        PLAY_WIDTH / 2, 
+        GAME_HEIGHT - 5, 
+        PLAY_WIDTH, 
+        10, 
+        wallStyle.color).setDepth(1);
+
     const light = this.lights
       .addLight(this.input.activePointer.x, this.input.activePointer.y, 1000, 0x99ffff, 0.75)
       .setScrollFactor(0);
     this.lights.enable().setAmbientColor(0xdddddd);
 
     const emitter = this.add.particles(0, 0, fruits[0].name, {
-      lifespan: 1000,
-      speed: { min: 200, max: 350 },
-      scale: { start: 0.1, end: 0 },
+      lifespan: 600,
+      speed: { min: 150, max: 250 },
+      scale: { start: 0.05, end: 0 },
       rotate: { start: 0, end: 360 },
       alpha: { start: 1, end: 0 },
-      gravityY: 200,
+      gravityY: 400,
       emitting: false,
     });
 
@@ -444,23 +469,25 @@ class Main extends Phaser.Scene {
       light.setPosition(pointer.x, pointer.y);
     });
 
-    this.input.on("pointerup", () => {
+    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (!this.dropper.visible || this.gameOver) return;
 
-      this.dropper.setVisible(false);
-      this.time.delayedCall(500, () => this.dropper.setVisible(!this.gameOver));
+      const isInsideGameZone = pointer.x > WALL_MARGIN && pointer.x < (PLAY_WIDTH - WALL_MARGIN);
 
-      const currentFruit = fruits.find((f) => f.name === this.dropper.name)!;
-      const gameObject = this.addFruit(this.dropper.x, this.dropper.y, currentFruit);
-      this.group.add(gameObject);
+      if (isInsideGameZone) {
+        this.dropper.setVisible(false);
+        this.time.delayedCall(500, () => this.dropper.setVisible(!this.gameOver));
 
-      const upcoming = this.nextFruit;
-      this.updateDropper(upcoming);
+        const currentFruit = fruits.find((f) => f.name === this.dropper.name)!;
+        const gameObject = this.addFruit(this.dropper.x, this.dropper.y, currentFruit);
+        this.group.add(gameObject);
 
-      const newNext = this.canChooseNextFruit
-        ? this.nextFruitChoice
-        : this.getRandomDropFruit();
-      this.updateNextFruitPanel(newNext);
+        const upcoming = this.nextFruit;
+        this.updateDropper(upcoming);
+
+        const newNext = this.canChooseNextFruit ? this.nextFruitChoice : this.getRandomDropFruit();
+        this.updateNextFruitPanel(newNext);
+      }
     });
 
     this.matter.world.on(
@@ -505,7 +532,6 @@ class Main extends Phaser.Scene {
       strokeThickness: 10,
     }).setOrigin(0.5).setDepth(11).setVisible(false);
 
-// Un petit effet de "battement" pour le rendre plus dynamique
     this.tweens.add({
         targets: this.loseText,
         scale: 1.1,
